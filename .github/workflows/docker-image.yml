@@ -1,0 +1,35 @@
+name: Build Custom Langfuse with Subpath
+
+on:
+  workflow_dispatch: # 允许手动点击按钮触发构建
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: v3.133.0 # 锁定为您当前使用的版本
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: web/Dockerfile
+          push: true
+          # 修改下方的 your-dockerhub-username 为您真实的 Docker Hub 用户名
+          tags: ${{ secrets.DOCKER_USERNAME }}/langfuse-custom:3.133.0
+          # 🚨 关键：在这里注入子路径参数 🚨
+          build-args: |
+            NEXT_PUBLIC_BASE_PATH=/langfuse_web
+            NEXT_PUBLIC_BK_LOGGER_ENABLED=false
